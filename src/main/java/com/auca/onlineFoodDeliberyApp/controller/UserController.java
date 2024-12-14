@@ -1,5 +1,6 @@
 package com.auca.onlineFoodDeliberyApp.controller;
 
+import com.auca.onlineFoodDeliberyApp.model.Role;
 import com.auca.onlineFoodDeliberyApp.model.User;
 import com.auca.onlineFoodDeliberyApp.service.AuditLogService;
 //import com.auca.onlineFoodDeliberyApp.service.QuizService;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import com.auca.onlineFoodDeliberyApp.service.NotificationService;
 
@@ -131,7 +133,65 @@ public class UserController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not logged in");
         }
-        notificationService.markAllAsRead(user.getId());
+        notificationService.markAsRead(user.getId());
         return ResponseEntity.ok("All notifications marked as read");
+    }
+    /*@PostMapping("/register")
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
+        try {
+            userService.registerUser(user);
+            return ResponseEntity.ok().body(Map.of("message", "Registration successful! You can log in now."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody User loginRequest, HttpSession session) {
+        User user = userService.loginUser(loginRequest.getUsername());
+
+        if (user == null || !user.getPassword().equals(loginRequest.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid username or password"));
+        }
+
+        session.setAttribute("loggedInUser", user);
+        return ResponseEntity.ok(Map.of("role", user.getRole(), "username", user.getUsername()));
+    }
+
+    @GetMapping("/logout")
+    public ResponseEntity<String> logout(HttpSession session) {
+        session.invalidate();
+        return ResponseEntity.ok("You are logged out.");
+    }
+*/
+    @GetMapping("/admin")
+    public ResponseEntity<?> getAdminDashboard(HttpSession session) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null || user.getRole() != Role.ROLE_ADMIN) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access");
+        }
+
+        // Fetch all users
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/employee")
+    public ResponseEntity<String> getEmployeeDashboard(HttpSession session) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null || user.getRole() != Role.ROLE_USER) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access");
+        }
+        return ResponseEntity.ok("Employee dashboard content");
+    }
+
+    @GetMapping("/employer")
+    public ResponseEntity<String> getEmployerDashboard(HttpSession session) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null || user.getRole() != Role.ROLE_MANAGER) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access");
+        }
+        return ResponseEntity.ok("Employer dashboard content");
     }
 }
